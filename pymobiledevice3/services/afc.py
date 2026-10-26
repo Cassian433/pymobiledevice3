@@ -1055,7 +1055,7 @@ class AfcService(LockdownService):
         Recursively yield paths under a directory up to a maximum depth.
 
         Yields ``root`` itself first, followed by the full path of every entry found while
-        walking, pruning descent once a directory's depth (in path separators) reaches
+        walking, pruning descent once a directory's depth relative to ``root`` reaches
         ``depth``.
 
         :param root: Root directory to list.
@@ -1071,7 +1071,11 @@ class AfcService(LockdownService):
                 yield posixpath.join(folder, entry)
             if depth != -1:
                 # Prune in place so `walk` never reads directories beyond the requested depth
-                dirs[:] = [d for d in dirs if posixpath.join(folder, d).count(posixpath.sep) < depth]
+                dirs[:] = [
+                    d
+                    for d in dirs
+                    if posixpath.relpath(posixpath.join(folder, d), root).count(posixpath.sep) < depth - 1
+                ]
 
     async def lock(self, handle: int, operation: int):
         """
